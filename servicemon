@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#Check if a process is provided beforehand,
+#Otherwise will require input
+
+if [ -z $1 ]
+then
+	echo No arg provided, enter a process name
+	read PROCESS	
+else
+	PROCESS=$1
+fi 
+
+#function that restarts and notifies if a process goes down
+REST_C=0
+restart_process() {
+	logger Process $PROCESS is down, attempting restart
+	mail -s "Process $PROCESS is down, attempting restart $(date "+%Y-%m-%d %H:%M:%S")" root < .
+	service $PROCESS start
+	REST_C=$(($REST_C + 1))
+}
+while ps aux | grep $PROCESS | grep -v grep | grep -v servicemon
+do
+	sleep 3
+done
+
+restart_process
+if [ $REST_C -ge 1 ]
+then
+	echo $PROCESS was restarted 
+fi
+exit 0
